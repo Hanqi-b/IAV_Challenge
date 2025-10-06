@@ -82,12 +82,12 @@ def generate_predictions_json(model,
                               img_dir,
                               out_json_path,
                               device,
-                              threshold: float = 0.5,
+                              threshold: float = 0.3,
                               batch_size: int = 64,
                               num_workers: int = 4,
                               preload: bool = False):
     """
-    Multi-label inference over all *.jpg under `img_dir` (threshold=0.5) and export to JSON:
+    Multi-label inference over all *.jpg under `img_dir` and export to JSON:
       {
           "000000000139": [56, 60, 62],
           "000000000285": [21],
@@ -124,7 +124,7 @@ def generate_predictions_json(model,
                 logits = model(images)
                 probs  = torch.sigmoid(logits)
 
-            # Binarize (threshold=0.5) and convert to class-id lists per image
+            # Binarize and convert to class-id lists per image
             preds_bin = (probs >= threshold)
 
             for i, stem in enumerate(stems):
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     # To switch backbone, use one of:
     # model = ResNet50_MultiLabel(num_classes=80).to(device)
     # model = ResNet101_MultiLabel(num_classes=80).to(device)
-    ckpt_path = r"checkpoints\20251005-214956\best_model.pth"   # <-- set your checkpoint path
+    ckpt_path = r"checkpoints\20251006-004848\best_model.pth"   # <-- set your checkpoint path
     state = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(state)
 
@@ -158,14 +158,14 @@ if __name__ == "__main__":
     base_path = Path(".").resolve()
     # e.g., a test set directory or any image folder you want to evaluate
     img_dir = base_path / "ms-coco" / "images" / "test-resized"  # <-- adjust to your real path
-    out_json = base_path / "outputs" / "20251005-214956" / "predictions.json"
+    out_json = base_path / "outputs" / "20251006-004848" / "predictions.json"
 
-    # 4) Run inference and export JSON (threshold=0.5)
+    # 4) Run inference and export JSON
     generate_predictions_json(model,
                               img_dir=img_dir,
                               out_json_path=str(out_json),
                               device=device,
-                              threshold=0.5,
+                              threshold=0.3,
                               batch_size=128,
                               num_workers=4,
                               preload=False)
