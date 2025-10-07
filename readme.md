@@ -148,6 +148,7 @@ We train a multilabel classifier with:
 * **Strategy:** end-to-end **fine-tuning**. 
 * **Threshold for binarization:** `0.35`
 * **Initial LR:** `1e-3`, **halved every 30 epoch**
+* **Epoch:** `100`
 
 ### Backbone and batch
 
@@ -171,5 +172,38 @@ We initially used a fixed decision threshold of **0.50**. Mid-project we learned
 * **Preload the training set to RAM:** We modified the dataset class to support preloading images. This removes I/O bottlenecks and stabilizes throughput.
 
 * **Parallel CPU–GPU pipeline:** The **GPU** trains (forward/backward + updates) while the **CPU**—via a multi-process `DataLoader`—**reads, decodes, augments, and prefetches** the next batch, reducing I/O stalls and boosting throughput.
+
+# Conclusions
+
+**1) Overall strengths vs. weaknesses**
+
+* **Strong classes (high F1):** `giraffe (0.891)`, `person (0.890)`, `zebra (0.880)`, `tennis racket (0.865)`, `baseball glove (0.833)`, `surfboard (0.807)`, `train (0.793)`, `airplane (0.775)`, `elephant (0.778)`, `kite (0.781)`. Common traits: large objects, distinctive texture/shape.
+* **Weak classes (low F1):** `toaster (0.000)`, `hair drier (0.000)`, `scissors (0.136)`, `toothbrush (0.235)`, `parking meter (0.286)` and many **small/handheld** items (`fork/knife/spoon/wine glass/handbag/backpack/suitcase` typically **0.3–0.5**).
+
+**2) Precision–recall imbalance patterns**
+
+* **Conservative (Precision ≫ Recall):** `fire hydrant (0.80 vs 0.41)`, `umbrella (0.76 vs 0.42)`, `orange (0.78 vs 0.45)`, `hot dog (0.70 vs 0.27)`, `bottle (0.52 vs 0.30)`. Indicates fewer false positives but more misses (many FNs).
+* **More aggressive (Recall ≥ Precision):** `fork (0.40 vs 0.46)`, `knife (0.40 vs 0.43)`, `spoon (0.33 vs 0.36)`, `zebra (0.86 vs 0.91)`, `couch (0.57 vs 0.62)`. Indicates easier detection with higher FP risk.
+
+**3) Zero or very low classes**
+
+* `toaster` and `hair drier` have **F1 = 0** (P=0, R=0), typical of extremely rare or never-detected long-tail classes.
+* Very low F1 for `scissors/toothbrush/parking meter` aligns with **small objects** and likely **low frequency**.
+
+**4) Fine-grained, visually similar groups**
+
+* `bottle/cup/wine glass/bowl`, `fork/knife/spoon`, `handbag/backpack/suitcase` show **mid-to-low F1** and often **low recall**, consistent with fine-grained visual similarity and confusions.
+
+**5) Mid-range categories (transport/furniture)**
+
+* **Transport:** `train (0.793)`, `bus (0.647)`, `car (0.615)`, `motorcycle (0.601)`, `truck (0.477)`, `bicycle (0.473)`—larger/stable-shape classes fare better.
+* **Furniture:** `chair (0.523)`, `couch (0.593)`, `bed (0.578)`, `dining table (0.585)`—generally mid-level.
+
+**Overall takeaway**
+
+* The model excels on **large, distinctive** categories and struggles on **small** and **fine-grained** ones.
+* Many weaker classes show **high precision but low recall** (conservative behavior).
+* Clear evidence of a **long-tail effect** with near-zero performance on the rarest classes.
+
 
 
